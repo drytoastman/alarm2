@@ -10,9 +10,9 @@ enum  {
   BLINK_SUSPENDED = 2500,
 };
 
-int blink_interval_ms = BLINK_NOT_MOUNTED;
+int  blink_interval_ms = BLINK_NOT_MOUNTED;
 char inputbuffer[256];
-int bufend = 0;
+int  bufsize = 0;
 
 char outputbuffer[256];
 void usb_printf(const char *fmt, ...) {
@@ -37,17 +37,41 @@ void tud_umount_cb(void)      { blink_interval_ms = BLINK_NOT_MOUNTED; }
 void tud_suspend_cb(bool _)   { blink_interval_ms = BLINK_SUSPENDED; }
 void tud_resume_cb(void)      { blink_interval_ms = BLINK_MOUNTED; }
 
+void process_command(char *command) {
+    int gpio, val;
+    switch (command[0]) {
+        case 'I': inputs_send_all(); break;
+        case 'O': outputs_send_all(); break;
+        default:
+            if (sscanf(command, "%d=%d", &gpio, &val) == 2) {
+                output_set(gpio, val);
+            }
+        break;
+    }
+}
+
 void cdc_task(void) {
     if (tud_cdc_connected() && tud_cdc_available()) {
         int number;
-        uint32_t cnt = tud_cdc_read(&inputbuffer[bufend], sizeof(inputbuffer) - bufend);
+        uint32_t cnt = tud_cdc_read(&inputbuffer[bufsize], sizeof(inputbuffer) - bufsize);
         if (cnt > 0) {
-            for (int ii = bufend; ii < bufend+cnt; ii++) {
-                if (inputbuffer[bufend-1] == '\n') {
-                    sscanf(inputbuffer, "%d\n", &number);
+            int start = 0;
+            int cut = -1;
+            bufsize += cnt;
+
+            for (int ii = 0; ii < bufsize; ii++) {
+                if (inputbuffer[ii] == '\n') {
+                    inputbuffer[ii] = 0;
+                    cut = ii+1;
+                    process_command(&inputbuffer[start]);
+                    start = cut;
                 }
             }
-            bufend += cnt;
+
+            if (cut > 0) {
+                memmove(inputbuffer, &inputbuffer[cut], bufsize - cut);
+                bufsize -= cut;
+            }
         }
     }
 }

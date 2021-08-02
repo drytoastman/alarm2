@@ -68,3 +68,9 @@ void inputs_task() {
         }
     }
 }
+
+void inputs_send_all() {
+    for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
+        usb_printf("I%d=%d\n", gpio, state[gpio].reported);
+    }
+}

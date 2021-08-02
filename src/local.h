@@ -8,6 +8,7 @@ void usb_printf(const char *fmt, ...);
 #define DEBOUNCE_US 10000
 void inputs_init();
 void inputs_task();
+void inputs_send_all();
 
 // OUTPUTS
 #define HWLED    28
@@ -16,3 +17,5 @@ void inputs_task();
 #define BOARDLED 25
 #define HOTWATER 22
 void outputs_init();
+void output_set(int gpio, int val);
+void outputs_send_all();

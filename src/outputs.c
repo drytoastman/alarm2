@@ -57,6 +57,21 @@ void buzzer_set(int freq) {
     }
 }
 
+void outputs_send_all() {
+    for (int ii = 0; ii < sizeof(outputs)/sizeof(int); ii++) {
+        usb_printf("O%d=%d\n", outputs[ii], gpio_get(outputs[ii]));
+    }
+}
+
 void output_set(int gpio, int val) {
-    gpio_put(gpio, val);
+    switch (gpio) {
+        case BUZZER:
+            buzzer_set(val);
+            break;
+        case HWLED:
+        case ALARM:
+        case HOTWATER:
+            gpio_put(gpio, val);
+            break;
+    }
 }
