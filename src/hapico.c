@@ -21,18 +21,19 @@ void usb_printf(const char *fmt, ...) {
     int cnt = vsprintf(outputbuffer, fmt, ap);
     va_end(ap);
 
-    tud_cdc_write(outputbuffer, cnt-1);  // don't send \0
+    tud_cdc_write(outputbuffer, cnt);
     tud_cdc_write_flush();
+    tud_task();  // let it write now as usb buffer is only 64 bytes
 }
 
 
 int64_t led_blink(alarm_id_t id, void *user_data) {
     gpio_xor_mask(1ul << BOARDLED);
-    return blink_interval_ms;
+    return blink_interval_ms*1000;  // return is in uS
 }
 
 void tud_cdc_rx_cb(uint8_t _) { /* just wake and handle in main loop */ }
-void tud_mount_cb(void)       { blink_interval_ms = BLINK_MOUNTED;   usb_printf("hello world!\n"); }
+void tud_mount_cb(void)       { blink_interval_ms = BLINK_MOUNTED; }
 void tud_umount_cb(void)      { blink_interval_ms = BLINK_NOT_MOUNTED; }
 void tud_suspend_cb(bool _)   { blink_interval_ms = BLINK_SUSPENDED; }
 void tud_resume_cb(void)      { blink_interval_ms = BLINK_MOUNTED; }
@@ -60,7 +61,7 @@ void cdc_task(void) {
             bufsize += cnt;
 
             for (int ii = 0; ii < bufsize; ii++) {
-                if (inputbuffer[ii] == '\n') {
+                if (inputbuffer[ii] == '\r') {
                     inputbuffer[ii] = 0;
                     cut = ii+1;
                     process_command(&inputbuffer[start]);
@@ -78,6 +79,7 @@ void cdc_task(void) {
 
 
 int main() {
+    alarm_pool_init_default();
     inputs_init();
     outputs_init();
 
