@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include "hardware/gpio.h"
+#include "pico/time.h"
 #include "tusb.h"
 
 #include "local.h"
@@ -11,21 +12,42 @@ enum  {
 };
 
 int  blink_interval_ms = BLINK_NOT_MOUNTED;
-char inputbuffer[256];
 int  bufsize = 0;
 
-char outputbuffer[256];
 void usb_printf(const char *fmt, ...) {
+    char outputbuffer[512];
+
     va_list ap;
     va_start(ap, fmt);
-    int cnt = vsprintf(outputbuffer, fmt, ap);
+    int length = vsnprintf(outputbuffer, sizeof(outputbuffer), fmt, ap);
     va_end(ap);
 
-    tud_cdc_write(outputbuffer, cnt);
-    tud_cdc_write_flush();
-    tud_task();  // let it write now as usb buffer is only 64 bytes
+    static uint64_t last_avail_time;
+    if (tud_cdc_connected()) {
+        for (int i = 0; i < length;) {
+            int n = length - i;
+            int avail = tud_cdc_write_available();
+            if (n > avail) n = avail;
+            if (n) {
+                int n2 = tud_cdc_write(&outputbuffer[i], n);
+                tud_task();
+                tud_cdc_write_flush();
+                i += n2;
+                last_avail_time = time_us_64();
+            } else {
+                tud_task();
+                tud_cdc_write_flush();
+                if (!tud_cdc_connected() ||
+                    (!tud_cdc_write_available() && time_us_64() > last_avail_time + USB_TIMEOUT_US)) {
+                    break;
+                }
+            }
+        }
+    } else {
+        // reset our timeout
+        last_avail_time = 0;
+    }
 }
-
 
 int64_t led_blink(alarm_id_t id, void *user_data) {
     gpio_xor_mask(1ul << BOARDLED);
@@ -41,19 +63,30 @@ void tud_resume_cb(void)      { blink_interval_ms = BLINK_MOUNTED; }
 void process_command(char *command) {
     int gpio, val;
     switch (command[0]) {
-        case 'I': inputs_send_all(); break;
-        case 'O': outputs_send_all(); break;
+        case 'I': 
+            inputs_send_all();  
+            return;
+        case 'O': 
+            outputs_send_all(); 
+            return;
+        case 'B':
+            if (sscanf(command, "B=%d", &val) == 1) {
+                buzzer_set(val);
+                return;
+            }
         default:
             if (sscanf(command, "%d=%d", &gpio, &val) == 2) {
                 output_set(gpio, val);
+                return;
             }
         break;
     }
+    usb_printf("invalid request '%s'\n", command);
 }
 
 void cdc_task(void) {
+    static char inputbuffer[512];
     if (tud_cdc_connected() && tud_cdc_available()) {
-        int number;
         uint32_t cnt = tud_cdc_read(&inputbuffer[bufsize], sizeof(inputbuffer) - bufsize);
         if (cnt > 0) {
             int start = 0;
@@ -61,10 +94,12 @@ void cdc_task(void) {
             bufsize += cnt;
 
             for (int ii = 0; ii < bufsize; ii++) {
-                if (inputbuffer[ii] == '\r') {
+                if ((inputbuffer[ii] == '\r') || (inputbuffer[ii] == '\n')) {
                     inputbuffer[ii] = 0;
                     cut = ii+1;
-                    process_command(&inputbuffer[start]);
+                    if (start != ii) {
+                        process_command(&inputbuffer[start]);
+                    }
                     start = cut;
                 }
             }
