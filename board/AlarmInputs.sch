@@ -273,8 +273,6 @@ F 3 "~" H 4550 4770 50  0001 C CNN
 	1    4550 4770
 	-1   0    0    -1  
 $EndComp
-Text GLabel 4750 5070 2    50   Input ~ 0
-5V
 Text GLabel 4750 5170 2    50   BiDi ~ 0
 BUZZERGND
 Text GLabel 6750 1650 2    50   BiDi ~ 0
@@ -325,10 +323,8 @@ Text GLabel 3160 6400 2    50   BiDi ~ 0
 5V
 Text GLabel 8910 2350 2    50   BiDi ~ 0
 LEDGND
-Text GLabel 8910 2450 2    50   BiDi ~ 0
+Text GLabel 6750 2450 2    50   BiDi ~ 0
 BUZZERGND
-Wire Wire Line
-	8530 2450 8910 2450
 Wire Wire Line
 	8960 2940 8960 2550
 Wire Wire Line
@@ -359,8 +355,6 @@ Text GLabel 7730 2850 0    50   BiDi ~ 0
 GND
 Text GLabel 7730 2950 0    50   BiDi ~ 0
 GND
-Wire Wire Line
-	6750 2450 7730 2450
 Wire Wire Line
 	6750 2550 7730 2550
 Wire Wire Line
@@ -395,4 +389,8 @@ Wire Wire Line
 	7160 2650 7730 2650
 Text GLabel 3160 5900 2    50   BiDi ~ 0
 GND
+Text GLabel 6750 2050 2    50   BiDi ~ 0
+3.3V
+Text GLabel 4750 5070 2    50   BiDi ~ 0
+3.3V
 $EndSCHEMATC
