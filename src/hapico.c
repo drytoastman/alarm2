@@ -74,6 +74,11 @@ void process_command(char *command) {
                 buzzer_set(val);
                 return;
             }
+        case 'D':
+            if (sscanf(command, "D%d=%d", &gpio, &val) == 2) {
+                debounce_set(gpio, val);
+                return;
+            }
         default:
             if (sscanf(command, "%d=%d", &gpio, &val) == 2) {
                 output_set(gpio, val);

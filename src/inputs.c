@@ -6,6 +6,7 @@ typedef struct {
     uint gpio;
     bool reported;
     bool changed;
+    uint64_t debounce;
 } InputState;
 
 InputState state[INPUTPINLAST+1];
@@ -34,7 +35,7 @@ int64_t debounce(alarm_id_t id, void *user) {
 void edge_callback(uint gpio, uint32_t events) {
     if (events & EDGES) {
         gpio_set_irq_enabled(gpio, EDGES, false);
-        alarm_pool_add_alarm_in_us(debouncePool, DEBOUNCE_US, debounce, &state[gpio], true);
+        alarm_pool_add_alarm_in_us(debouncePool, state[gpio].debounce, debounce, &state[gpio], true);
     }
 }
 
@@ -46,7 +47,7 @@ void inputs_init() {
     busy_wait_ms(10);  // wait to make sure our inputs are settled after powering everything on
 
     for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
-        InputState s = { .gpio = gpio, .reported = true, .changed = false };
+        InputState s = { .gpio = gpio, .reported = true, .changed = false, .debounce = DEBOUNCE_US };
         state[gpio] = s;
 
         gpio_init(gpio);
@@ -73,4 +74,15 @@ void inputs_send_all() {
     for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
         usb_printf("I%d=%d\n", gpio, state[gpio].reported);
     }
+}
+
+void debounce_set(int gpio, int val)
+{
+    if (gpio > INPUTPINLAST) {
+        usb_printf("invalid input (%d) for debounce setting\n", gpio);
+        return;
+    }
+
+    state[gpio].debounce = val;
+    usb_printf("debounce set %d=%d\n", gpio, val);
 }

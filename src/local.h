@@ -10,6 +10,7 @@ void usb_printf(const char *fmt, ...);
 void inputs_init();
 void inputs_task();
 void inputs_send_all();
+void debounce_set(int gpio, int val);
 
 // OUTPUTS
 #define HWLED    28
