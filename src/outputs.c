@@ -1,6 +1,7 @@
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
 #include "hardware/clocks.h"
+#include "pico/time.h"
 
 #include "local.h"
 
@@ -10,6 +11,8 @@ const int outputs[] = {
 const int buzzer_slice = (BUZZER >> 1u) & 7u;
 const int buzzer_chan  = BUZZER & 1u;
 const float clkdiv = 8.0;
+int buzzer_freq = 0;
+alarm_id_t buzzer_alarm;
 
 
 /*
@@ -43,35 +46,53 @@ void outputs_init() {
         pwm_config_set_clkdiv(&c, clkdiv);
         pwm_init(buzzer_slice, &c, false);
         gpio_set_function(BUZZER, GPIO_FUNC_PWM);
+        gpio_set_drive_strength(BUZZER, GPIO_DRIVE_STRENGTH_2MA);
     }
 }
 
+int64_t buzzer_toggle(alarm_id_t id, void *data) {
+    bool *buzzer_on = data;
+    *buzzer_on = !*buzzer_on;
+    pwm_set_enabled(buzzer_slice, *buzzer_on);
+    return BUZZER_TOGGLE_US;
+}
+
 void buzzer_set(int freq) {
+    static bool buzzer_on = false;
+
     if (freq == 0) {
         pwm_set_enabled(buzzer_slice, false);
+        cancel_alarm(buzzer_alarm);
+        buzzer_freq = 0;
     } else {
         uint16_t scale = FREQ_TO_SCALE(clkdiv, freq);
         pwm_set_wrap(buzzer_slice, scale);
         pwm_set_chan_level(buzzer_slice, buzzer_chan, scale/2);
-        pwm_set_enabled(buzzer_slice, false);
+        pwm_set_enabled(buzzer_slice, true);
+
+        buzzer_freq = freq;
+        buzzer_on = true;
+        buzzer_alarm = add_alarm_in_us(BUZZER_TOGGLE_US, buzzer_toggle, &buzzer_on, true);
     }
 }
 
 void outputs_send_all() {
     for (int ii = 0; ii < sizeof(outputs)/sizeof(int); ii++) {
-        usb_printf("O%d=%d\n", outputs[ii], gpio_get(outputs[ii]));
+        if (outputs[ii] != BOARDLED)
+            usb_printf("O%d=%d\n", outputs[ii], gpio_get(outputs[ii]));
     }
+    usb_printf("B=%d\n", buzzer_freq);
 }
 
 void output_set(int gpio, int val) {
     switch (gpio) {
-        case BUZZER:
-            buzzer_set(val);
-            break;
         case HWLED:
         case ALARM:
         case HOTWATER:
             gpio_put(gpio, val);
+            break;
+        default:
+            usb_printf("invalid output: %d\n", gpio);
             break;
     }
 }

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
+set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(PICO_SDK_PATH ${CMAKE_SOURCE_DIR}/pico-sdk)
 set(PICO_BOARD pico)
 

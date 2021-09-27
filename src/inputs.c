@@ -43,10 +43,10 @@ void edge_callback(uint gpio, uint32_t events) {
  */
 void inputs_init() {
     debouncePool = alarm_pool_create(PICO_TIME_DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM - 1, 32);
-    busy_wait_ms(10);  // wait to make sure our inputs are settles after powering everything on
+    busy_wait_ms(10);  // wait to make sure our inputs are settled after powering everything on
 
     for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
-        InputState s = { .gpio = gpio, .reported = false, .changed = false };
+        InputState s = { .gpio = gpio, .reported = true, .changed = false };
         state[gpio] = s;
 
         gpio_init(gpio);
