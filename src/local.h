@@ -20,6 +20,8 @@ void debounce_set(int gpio, int val);
 #define HOTWATER 22
 #define BUZZER_TOGGLE_US 500000
 void outputs_init();
-void output_set(int gpio, int val);
-void buzzer_set(int val);
+void alarm_set(int val);
+void buzzer_set(int freq);
+void hwled_set(int brightness);
+void hw_toggle();
 void outputs_send_all();

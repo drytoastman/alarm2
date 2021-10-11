@@ -69,22 +69,33 @@ void process_command(char *command) {
         case 'O': 
             outputs_send_all(); 
             return;
+
+        // Outputs
+        case 'A':
+            if (sscanf(command, "A=%d", &val) == 1) {
+                alarm_set(val);
+                return;
+            }
         case 'B':
             if (sscanf(command, "B=%d", &val) == 1) {
                 buzzer_set(val);
                 return;
             }
+        case 'H':
+            hw_toggle();
+            return;
+        case 'L':
+            if (sscanf(command, "L=%d", &val) == 1) {
+                hwled_set(val);
+                return;
+            }
+
+        // Input settings
         case 'D':
             if (sscanf(command, "D%d=%d", &gpio, &val) == 2) {
                 debounce_set(gpio, val);
                 return;
             }
-        default:
-            if (sscanf(command, "%d=%d", &gpio, &val) == 2) {
-                output_set(gpio, val);
-                return;
-            }
-        break;
     }
     usb_printf("invalid request '%s'\n", command);
 }
