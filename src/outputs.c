@@ -66,19 +66,6 @@ void pin_setup(int pin) {
     gpio_set_drive_strength(pin, GPIO_DRIVE_STRENGTH_2MA);
 }
 
-void outputs_init() {
-    pin_setup(ALARM);
-    pin_setup(HOTWATER);
-
-    // Buzzer
-    pwm_setup(BUZZER,  8, &buzzer);
-    buzzer.duty = 50;
-    gpio_set_drive_strength(BUZZER, GPIO_DRIVE_STRENGTH_8MA);
-
-    // Hotwater LED
-    pwm_setup(HWLED,  16, &hwled);
-    hwled.freq = 1000;
-}
 
 
 // Alarm
@@ -109,20 +96,11 @@ void buzzer_set(int freq) {
     usb_printf("B=%d\n", buzzer.freq);
 }
 
-// Hotwater request line toggle
-int64_t hw_off(alarm_id_t id, void *data) {
-    gpio_put(HOTWATER, 0);
-    usb_printf("H=0\n");
-    return 0;
-}
-
-void hw_toggle() {
-    gpio_put(HOTWATER, 1);
-    usb_printf("H=1\n");
-    add_alarm_in_ms(500, hw_off, NULL, true);
-}
 
 // Hotwater LED
+int save_brightness = 0;
+alarm_id_t pulse_alarm;
+
 void hwled_set(int brightness) {
     hwled.duty = brightness;
     if (hwled.duty == 0) {
@@ -133,6 +111,49 @@ void hwled_set(int brightness) {
     usb_printf("L=%d\n", hwled.duty);
 }
 
+int64_t hwled_pulse(alarm_id_t id, void *data) {
+    static int direction = -1;
+    if (direction < 0) {
+        hwled.duty--;
+        if (hwled.duty <= 0) direction = 1;
+    } else {
+        hwled.duty++;
+        if (hwled.duty >= 100) direction = -1;
+    }
+    pwm_set(&hwled);
+    return HWLED_PULSE_US;
+}
+
+int64_t hwled_pulse_off(alarm_id_t id, void *data) {
+    // cancel alarm and then wait to make sure its done
+    cancel_alarm(pulse_alarm);
+    sleep_ms(HWLED_PULSE_US * 2);
+    hwled.duty = save_brightness;
+    return 0;
+}
+
+void hwled_pulse_on() {
+    save_brightness = hwled.duty;
+    pulse_alarm = add_alarm_in_us(HWLED_PULSE_US, hwled_pulse, NULL, true);
+    add_alarm_in_ms(45000, hwled_pulse_off, NULL, true);
+}
+
+
+// Hotwater request line toggle
+int64_t hw_off(alarm_id_t id, void *data) {
+    gpio_put(HOTWATER, 0);
+    usb_printf("H=0\n");
+    return 0;
+}
+
+void hw_toggle() {
+    gpio_put(HOTWATER, 1);
+    usb_printf("H=1\n");
+    hwled_pulse_on();
+    add_alarm_in_ms(500,   hw_off,    NULL, true);
+}
+
+
 void outputs_send_all() {
     usb_printf("A=%d\n", gpio_get(ALARM));
     usb_printf("B=%d\n", buzzer.freq);
@@ -140,3 +161,18 @@ void outputs_send_all() {
     usb_printf("L=%d\n", hwled.duty);
 }
 
+void outputs_init() {
+    pin_setup(ALARM);
+    pin_setup(HOTWATER);
+
+    // Buzzer
+    pwm_setup(BUZZER,  8, &buzzer);
+    buzzer.duty = 50;
+    gpio_set_drive_strength(BUZZER, GPIO_DRIVE_STRENGTH_8MA);
+
+    // Hotwater LED
+    pwm_setup(HWLED,  16, &hwled);
+    hwled.freq = 1000;
+    pwm_set_enabled(hwled.slice, true);
+    hwled_set(15);
+}

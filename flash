@@ -1,0 +1,2 @@
+cd $(dirname "${BASH_SOURCE[0]}")
+openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program build/src/hapico.elf verify reset exit"

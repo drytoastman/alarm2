@@ -19,6 +19,7 @@ void debounce_set(int gpio, int val);
 #define BOARDLED 25
 #define HOTWATER 22
 #define BUZZER_TOGGLE_US 500000
+#define HWLED_PULSE_US   7000
 void outputs_init();
 void alarm_set(int val);
 void buzzer_set(int freq);
