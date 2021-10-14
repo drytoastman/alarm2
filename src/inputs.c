@@ -47,14 +47,15 @@ void inputs_init() {
     busy_wait_ms(10);  // wait to make sure our inputs are settled after powering everything on
 
     for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
-        InputState s = { .gpio = gpio, .reported = true, .changed = false, .debounce = DEBOUNCE_US };
-        state[gpio] = s;
 
         gpio_init(gpio);
         gpio_set_dir(gpio, GPIO_IN);
         gpio_pull_up(gpio);
         gpio_set_irq_enabled_with_callback(gpio, EDGES, true, edge_callback);
         gpio_set_input_enabled(gpio, true);
+
+        InputState s = { .gpio = gpio, .reported = gpio_get(gpio), .changed = false, .debounce = DEBOUNCE_US };
+        state[gpio] = s;
     }
 }
 
