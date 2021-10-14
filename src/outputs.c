@@ -98,7 +98,7 @@ void buzzer_set(int freq) {
 
 
 // Hotwater LED
-int save_brightness = 0;
+int save_brightness = -1;
 alarm_id_t pulse_alarm;
 
 void hwled_set(int brightness) {
@@ -127,8 +127,9 @@ int64_t hwled_pulse(alarm_id_t id, void *data) {
 int64_t hwled_pulse_off(alarm_id_t id, void *data) {
     // cancel alarm and then wait to make sure its done
     cancel_alarm(pulse_alarm);
-    sleep_ms(HWLED_PULSE_US * 2);
+    // sleep_us(HWLED_PULSE_US * 2);
     hwled.duty = save_brightness;
+    save_brightness = -1;
     return 0;
 }
 
@@ -147,10 +148,14 @@ int64_t hw_off(alarm_id_t id, void *data) {
 }
 
 void hw_toggle() {
+    if (save_brightness >= 0) {
+        usb_printf("recirc is currently on, ignoring request\n");
+        return;
+    }
     gpio_put(HOTWATER, 1);
     usb_printf("H=1\n");
     hwled_pulse_on();
-    add_alarm_in_ms(500,   hw_off,    NULL, true);
+    add_alarm_in_ms(500, hw_off, NULL, true);
 }
 
 
