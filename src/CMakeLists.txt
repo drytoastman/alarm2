@@ -1,7 +1,7 @@
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-add_executable(hapico hapico.c inputs.c outputs.c usb_descriptors.c)
+add_executable(hapico hapico.c inputs.c outputs.c usb_descriptors.c options.c)
 
 # Add pico_stdlib library which aggregates commonly used features
 target_link_libraries(hapico pico_stdlib pico_unique_id hardware_pwm tinyusb_device)

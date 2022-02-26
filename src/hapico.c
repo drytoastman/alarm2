@@ -63,14 +63,17 @@ void tud_resume_cb(void)      { blink_interval_ms = BLINK_MOUNTED; }
 void process_command(char *command) {
     int gpio, val;
     switch (command[0]) {
-        case 'I': 
-            inputs_send_all();  
+        case 'I':
+            inputs_send_all();
             return;
-        case 'O': 
-            outputs_send_all(); 
+        case 'O':
+            outputs_send_all();
             return;
 
-        // Outputs
+        // Output switches
+        case 'H':
+            hw_toggle();
+            return;
         case 'A':
             if (sscanf(command, "A=%d", &val) == 1) {
                 alarm_set(val);
@@ -81,22 +84,30 @@ void process_command(char *command) {
                 buzzer_set(val);
                 return;
             }
-        case 'H':
-            hw_toggle();
-            return;
-        case 'L':
-            if (sscanf(command, "L=%d", &val) == 1) {
-                hwled_set(val);
+
+        // Numerical Settings
+        case 'T':
+            if (sscanf(command, "T=%d", &val) == 1) {
+                buzzer_set_freq(val);
                 return;
             }
-
-        // Input settings
+        case 'L':
+            if (sscanf(command, "L=%d", &val) == 1) {
+                hwled_set_brightness(val);
+                return;
+            }
         case 'D':
             if (sscanf(command, "D%d=%d", &gpio, &val) == 2) {
                 debounce_set(gpio, val);
                 return;
             }
+
+        // Button
+        case 'S':
+            options_write();
+            return;
     }
+
     usb_printf("invalid request '%s'\n", command);
 }
 
@@ -130,12 +141,17 @@ void cdc_task(void) {
 
 
 int main() {
+    bool ofound = options_read();
     alarm_pool_init_default();
     inputs_init();
     outputs_init();
 
     add_alarm_in_ms(blink_interval_ms, led_blink, NULL, true);
     tusb_init();
+
+    if (!ofound) {
+        usb_printf("options intitialized\n");
+    }
 
     while (true) {
         tud_task();

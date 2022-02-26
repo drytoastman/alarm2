@@ -54,7 +54,7 @@ void inputs_init() {
         gpio_set_irq_enabled_with_callback(gpio, EDGES, true, edge_callback);
         gpio_set_input_enabled(gpio, true);
 
-        InputState s = { .gpio = gpio, .reported = gpio_get(gpio), .changed = false, .debounce = DEBOUNCE_US };
+        InputState s = { .gpio = gpio, .reported = gpio_get(gpio), .changed = false, .debounce = options.debounce[gpio] };
         state[gpio] = s;
     }
 }
@@ -74,6 +74,7 @@ void inputs_task() {
 void inputs_send_all() {
     for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
         usb_printf("I%d=%d\n", gpio, state[gpio].reported);
+        usb_printf("D%d=%d\n", gpio, state[gpio].debounce);
     }
 }
 
@@ -85,5 +86,6 @@ void debounce_set(int gpio, int val)
     }
 
     state[gpio].debounce = val;
-    usb_printf("debounce set %d=%d\n", gpio, val);
+    options.debounce[gpio] = val;
+    usb_printf("D%d=%d\n", gpio, val);
 }
