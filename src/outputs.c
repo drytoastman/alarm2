@@ -165,10 +165,10 @@ void hw_toggle() {
 }
 
 void outputs_send_all() {
-    usb_printf("H=%d\n", gpio_get(HOTWATER));
+    usb_printf("H=%d\n", (save_brightness != -1));
     usb_printf("A=%d\n", gpio_get(ALARM));
-    usb_printf("B=%d\n", gpio_get(BUZZER));
-    usb_printf("T=%d\n", buzzer.freq);
+    usb_printf("R=%d\n", gpio_get(BUZZER));
+    usb_printf("B=%d\n", buzzer.freq);
     usb_printf("L=%d\n", hwled.duty);
 }
 
