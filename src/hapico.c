@@ -37,8 +37,7 @@ void usb_printf(const char *fmt, ...) {
             } else {
                 tud_task();
                 tud_cdc_write_flush();
-                if (!tud_cdc_connected() ||
-                    (!tud_cdc_write_available() && time_us_64() > last_avail_time + USB_TIMEOUT_US)) {
+                if (!tud_cdc_connected() || (!tud_cdc_write_available() && time_us_64() > last_avail_time + USB_TIMEOUT_US)) {
                     break;
                 }
             }

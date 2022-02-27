@@ -186,5 +186,5 @@ void outputs_init() {
     pwm_setup(HWLED,  HWLED_CLKDIV, &hwled);
     hwled.freq = HWLED_PWM_FREQ;
     pwm_set_enabled(hwled.slice, true);
-    hwled.duty = options.led_brightness;
+    hwled_set_brightness(options.led_brightness);
 }
