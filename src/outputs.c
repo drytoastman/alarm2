@@ -88,19 +88,19 @@ int64_t buzzer_toggle(alarm_id_t id, void *data) {
 void buzzer_set_freq(int freq) {
     buzzer.freq = freq;
     options.buzzer_freq = freq;
-    usb_printf("T=%d\n", buzzer.freq);
+    usb_printf("B=%d\n", buzzer.freq);
 }
 
 void buzzer_set(int val) {
     if ((val == 0) || (buzzer.freq == 0)) {
         pwm_set_enabled(buzzer.slice, false);
         cancel_alarm(buzzer.alarm);
-        usb_printf("B=0\n");
+        usb_printf("T=0\n");
     } else {
         pwm_set(&buzzer);
         buzzer_on    = true;
         buzzer.alarm = add_alarm_in_us(BUZZER_PULSE_US, buzzer_toggle, NULL, true);
-        usb_printf("B=1\n");
+        usb_printf("T=1\n");
     }
 }
 

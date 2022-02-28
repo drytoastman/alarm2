@@ -78,15 +78,15 @@ void process_command(char *command) {
                 alarm_set(val);
                 return;
             }
-        case 'B':
-            if (sscanf(command, "B=%d", &val) == 1) {
+        case 'T':
+            if (sscanf(command, "T=%d", &val) == 1) {
                 buzzer_set(val);
                 return;
             }
 
         // Numerical Settings
-        case 'T':
-            if (sscanf(command, "T=%d", &val) == 1) {
+        case 'B':
+            if (sscanf(command, "B=%d", &val) == 1) {
                 buzzer_set_freq(val);
                 return;
             }
