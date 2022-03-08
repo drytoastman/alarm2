@@ -65,6 +65,9 @@ void inputs_init() {
 void inputs_task() {
     for (int gpio = 0; gpio <= INPUTPINLAST; gpio++) {
         if (state[gpio].changed) {
+            if (gpio == HWSWITCH && state[gpio].reported == 0) {
+                hw_toggle();
+            }
             usb_printf("I%d=%d\n", gpio, state[gpio].reported);
             state[gpio].changed = false;
         }

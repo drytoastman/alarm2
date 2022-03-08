@@ -3,7 +3,7 @@
 void usb_printf(const char *fmt, ...);
 
 // INPUTS
-// #define HWSWITCH 20
+#define HWSWITCH 20
 #define INPUTPINLAST 21
 #define EDGES (GPIO_IRQ_EDGE_RISE|GPIO_IRQ_EDGE_FALL)
 void inputs_init();
